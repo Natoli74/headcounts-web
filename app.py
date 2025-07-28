@@ -20,7 +20,9 @@ from flask import (
 from flask_wtf import CSRFProtect
 import polars as pl
 from models import SearchForm
-from utils import filter_data, process_data_request
+from utils import (
+    filter_data, filter_data_advanced, process_data_request
+)
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
@@ -170,26 +172,66 @@ def build_url(form):
     return "/" + "/".join(parts) if parts else "/"
 
 
-# Suggest changing the route to '/' for conflicts with existing users
-@app.route("/search", methods=["GET", "POST"])
+# # Suggest changing the route to '/' for conflicts with existing users
+# @app.route("/search", methods=["GET", "POST"])
+# def search():
+#     """
+#     Show the form (GET) or accept submission (POST) and redirect
+#     to the canonical /<subject>/<spec1>/<spec2> URL handled by filtered_view.
+#     """
+#     form = SearchForm()
+
+#     if request.method == "POST":
+#         if form.validate_on_submit():
+#             # Build URL and redirect to filtered_view (bookmarkable)
+#             dest = build_url(form)
+#             return redirect(dest)
+#         else:
+#             flash("Please correct the errors below", "error")
+#             return render_template("search.html", form=form)
+
+#     # GET (initial page or redirected after POST)
+#     return render_template("search.html", form=form)
+
+
+@app.route('/search', methods=['GET', 'POST'])
 def search():
-    """
-    Show the form (GET) or accept submission (POST) and redirect
-    to the canonical /<subject>/<spec1>/<spec2> URL handled by filtered_view.
-    """
+    """Search for courses using the form."""
     form = SearchForm()
-
-    if request.method == "POST":
+    if request.method == 'POST':
+        filters = {}
         if form.validate_on_submit():
-            # Build URL and redirect to filtered_view (bookmarkable)
-            dest = build_url(form)
-            return redirect(dest)
-        else:
-            flash("Please correct the errors below", "error")
-            return render_template("search.html", form=form)
+            # If the form is valid, extract the filters from the form data.
+            if not form.has_filters():
+                filters['all_courses'] = True
+            else:
+                if form.subject_or_college.data:
+                    filters['subject_or_college'] = form.subject_or_college.data
+                if form.course_type.data:
+                    filters['course_type'] = form.course_type.data
+                if form.class_code.data:
+                    filters['course_number'] = form.class_code.data.strip()
+                filters['semester'] = form.semester.data
+                filters['year'] = form.year.data
 
-    # GET (initial page or redirected after POST)
-    return render_template("search.html", form=form)
+            # Read the Parquet file containing course enrollment data as a lazy
+            # Polars DataFrame.
+            table = pl.read_parquet(PARQUET_DATA).lazy()
+
+            # Filter the data based on the search query.
+            filtered_table, subj_text = filter_data_advanced(table, **filters)
+
+            # Collect the filtered DataFrame into a regular Polars DataFrame.
+            results = filtered_table.collect()
+
+            return process_data_request(results, request.path, subj_text)
+        else:
+            # Form validation failed
+            flash("Please correct the errors below", "error")
+            return render_template('search.html', form=form)
+
+    # If the request method is GET, render the search page without results.
+    return render_template('search.html', form=form)
 
 
 # Define the route for downloading a cached CSV file

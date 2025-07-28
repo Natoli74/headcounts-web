@@ -93,12 +93,13 @@ SUBJECTS = [
     ("WS", "Women's Studies"),
 ]
 
-YEAR_CHOICES = [("", "All Years")] + [
+YEAR_CHOICES = [("%", "All Years")] + [
     (str(year + 1), str(year)) for year in range(datetime.now().year, 2013, -1)
 ]
 
 COURSE_TYPES = [
     ("", "Select Course Type"),
+    ("/lasc", "All LASC Areas"),
     ("lasc/1", "Area 1 - Communication"),
     ("lasc/1a", "Area 1A - Oral Communication"),
     ("lasc/1b", "Area 1B - Written Communication"),
@@ -150,7 +151,7 @@ class SearchForm(FlaskForm):
     semester = SelectField(
         "Semester",
         choices=[
-            ("", "All"),
+            ("_", "All"),
             ("Fall", "Fall"),
             ("Summer", "Summer"),
             ("Spring", "Spring"),
@@ -169,9 +170,9 @@ class SearchForm(FlaskForm):
             return False
 
         # If semester == 'All' or year == 'All', set both to 'All'
-        if self.semester.data == "" or self.year.data == "":
-            self.semester.data = ""
-            self.year.data = ""
+        # if self.semester.data == "" or self.year.data == "":
+        #     self.semester.data = ""
+        #     self.year.data = ""
 
         # If selected subject_or_college is a divider (shouldn't happen with disabled options, but good to check)
         if self.subject_or_college.data == "_":
@@ -219,14 +220,12 @@ class SearchForm(FlaskForm):
 
     def has_filters(self):
         """Check if any meaningful filters are applied."""
-        # Check if time period is meaningful (not both 'All')
-        time_period_filtered = not (self.semester.data == "" and self.year.data == "")
-
         return any(
             [
                 self.subject_or_college.data,
                 self.course_type.data,
                 self.class_code.data,
-                time_period_filtered,
+                self.semester.data,
+                self.year.data,
             ]
         )

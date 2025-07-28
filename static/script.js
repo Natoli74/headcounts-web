@@ -166,17 +166,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission validation
     form.addEventListener('submit', function(e) {
         // Apply time period rule only on form submission
-        if (semesterField && yearField) {
-            if (semesterField.value === '' || yearField.value === '') {
-                semesterField.value = '';
-                yearField.value = '';
-            }
-        }
+        // if (semesterField && yearField) {
+        //     if (semesterField.value === '' || yearField.value === '') {
+        //         semesterField.value = '';
+        //         yearField.value = '';
+        //     }
+        // }
 
         // Final validation check before submission
         validateClassCode();
 
         const hasAnyFilter = Array.from(form.elements).some(element => {
+            if (semesterField.value === '_' && yearField.value === '%') return false;
             if (element.type === 'checkbox') return element.checked;
             if (element.type === 'select-one' || element.type === 'text') return element.value.trim();
             return false;
