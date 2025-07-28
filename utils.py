@@ -570,7 +570,7 @@ def filter_data_advanced(tbl, **filters):
         elif course_type == 'wi':
             filtered_table = filtered_table.filter(pl.col("LASC/WI").str.contains("WI"))
             filter_descriptions.append("Writing Intensive (WI)")
-        elif course_type == '18online':
+        elif course_type == '18':
             filtered_table = filtered_table.filter(pl.col('18online') == True)
             filter_descriptions.append("18-Online Courses")
 
