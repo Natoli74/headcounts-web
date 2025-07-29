@@ -151,9 +151,9 @@ class SearchForm(FlaskForm):
     semester = SelectField(
         "Semester",
         choices=[
-            ("_", "All"),
-            ("Fall", "Fall"),
+            ("_", "Academic Term"),
             ("Summer", "Summer"),
+            ("Fall", "Fall"),
             ("Spring", "Spring"),
         ],
         validators=[Optional()],
